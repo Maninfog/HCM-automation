@@ -25,3 +25,7 @@ Referenz-Implementierung zum Guide in `docs/n8n_HCM_Complete_Build_Guide.md` (lo
 
 - Steuer-/SV-Logik in `calculate_payroll` ist **nur Demo**, keine Rechtsberatung.  
 - `SUPABASE_SERVICE_KEY` **niemals** in öffentliche Web-Clients packen — nur n8n oder Server.
+
+## GitHub
+
+Eigenes Repo in diesem Ordner — Verbindung mit GitHub: **`docs/GITHUB.md`**.
