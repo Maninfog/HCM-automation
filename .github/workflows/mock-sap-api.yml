@@ -1,0 +1,21 @@
+name: HCM Mock SAP API
+
+on:
+  repository_dispatch:
+    types: [sap-api-call]
+
+jobs:
+  respond:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acknowledge
+        run: |
+          echo "mock SAP transaction=${{ github.event.client_payload.transaction || 'unknown' }}"
+      - name: Callback (optional)
+        if: ${{ github.event.client_payload.callback_url != '' }}
+        env:
+          CALLBACK_URL: ${{ github.event.client_payload.callback_url }}
+        run: |
+          curl -sS -X POST "$CALLBACK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"success":true,"sap_document_number":"DOC-${{ github.run_id }}","message":"mock SAP OK"}' || true

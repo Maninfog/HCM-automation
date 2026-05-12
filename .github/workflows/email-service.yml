@@ -1,0 +1,11 @@
+name: HCM Email stub
+
+on:
+  repository_dispatch:
+    types: [send-email]
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Email stub — payload logged only"

@@ -1,0 +1,106 @@
+{
+  "name": "HCM 04 Reporting — daily counts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "hcm04sch",
+      "name": "Every 24h (tune in UI)"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates?select=id&status=eq.applied",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "id": "hcm04get",
+      "name": "GET Applied Candidates"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json;\nconst list = Array.isArray(rows) ? rows : [];\nconst msg = `HCM daily: open applications (applied) = ${list.length}`;\nreturn [{ json: { message: msg, count: list.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "id": "hcm04sum",
+      "name": "Build Summary"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            { "id": "s1", "leftValue": "={{ $env.SLACK_WEBHOOK_URL }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [660, 0],
+      "id": "hcm04if",
+      "name": "IF Slack configured?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.message }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, -80],
+      "id": "hcm04slack",
+      "name": "POST Slack"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 120],
+      "id": "hcm04noop",
+      "name": "No Slack"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 24h (tune in UI)": { "main": [[{ "node": "GET Applied Candidates", "type": "main", "index": 0 }]] },
+    "GET Applied Candidates": { "main": [[{ "node": "Build Summary", "type": "main", "index": 0 }]] },
+    "Build Summary": { "main": [[{ "node": "IF Slack configured?", "type": "main", "index": 0 }]] },
+    "IF Slack configured?": {
+      "main": [
+        [{ "node": "POST Slack", "type": "main", "index": 0 }],
+        [{ "node": "No Slack", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

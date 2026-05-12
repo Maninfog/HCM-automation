@@ -1,0 +1,74 @@
+{
+  "name": "HCM 03 HR — Candidate decision",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hcm/candidate-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "hcm03wh",
+      "name": "Webhook Decision",
+      "webhookId": "hcm-candidate-decision"
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = $input.first().json;\nconst b = root.body && typeof root.body === 'object' ? root.body : root;\nconst id = b.candidateId || b.candidate_id;\nconst decision = (b.decision || '').toLowerCase();\nconst allowed = ['hire', 'interview', 'reject'];\nif (!id || !allowed.includes(decision)) {\n  throw new Error('candidateId and decision (hire|interview|reject) required');\n}\nconst map = { hire: 'hired', interview: 'interview', reject: 'rejected' };\nreturn [{ json: {\n  id,\n  status: map[decision],\n  notes: b.comments || b.notes || null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "hcm03val",
+      "name": "Validate Decision"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: $json.status, notes: $json.notes }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "hcm03patch",
+      "name": "PATCH Candidate"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, result: $json }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "id": "hcm03resp",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Decision": { "main": [[{ "node": "Validate Decision", "type": "main", "index": 0 }]] },
+    "Validate Decision": { "main": [[{ "node": "PATCH Candidate", "type": "main", "index": 0 }]] },
+    "PATCH Candidate": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HCM — Bewerbung (Demo)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="card">
+    <h1>Global Bike — Bewerbung</h1>
+    <p>Demo-Portal. Daten gehen an n8n → Supabase.</p>
+    <form id="form">
+      <label>Vorname *</label>
+      <input name="firstName" required />
+      <label>Nachname *</label>
+      <input name="lastName" required />
+      <label>E-Mail *</label>
+      <input name="email" type="email" required />
+      <label>Telefon</label>
+      <input name="phone" />
+      <label>Geburtsdatum</label>
+      <input name="dateOfBirth" type="date" />
+      <label>Position *</label>
+      <select name="positionId" id="positionId" required></select>
+      <label>Erfahrung (Jahre)</label>
+      <input name="experience" type="number" min="0" max="50" />
+      <label>Ausbildung</label>
+      <input name="education" />
+      <label>Skills (kommagetrennt)</label>
+      <input name="skills" />
+      <label>Anschreiben</label>
+      <textarea name="coverLetter" rows="4"></textarea>
+      <button type="submit" id="btn">Absenden</button>
+    </form>
+    <div id="ok" class="msg ok">Danke — Bewerbung wurde übermittelt.</div>
+    <div id="er" class="msg err"></div>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

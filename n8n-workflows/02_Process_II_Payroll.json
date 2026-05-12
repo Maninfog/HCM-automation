@@ -1,0 +1,119 @@
+{
+  "name": "HCM 02 Process II — Payroll (demo)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "hcm02man",
+      "name": "Manual Run"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst periodStart = new Date(now.getFullYear(), now.getMonth(), 1);\nconst periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);\nconst paymentDate = new Date(now.getFullYear(), now.getMonth() + 1, 5);\nreturn [{\n  json: {\n    period_start: periodStart.toISOString().split('T')[0],\n    period_end: periodEnd.toISOString().split('T')[0],\n    payment_date: paymentDate.toISOString().split('T')[0]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "hcm02period",
+      "name": "Set Period"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/employees?status=eq.active&select=id,email,personnel_number&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "hcm02emp",
+      "name": "GET Active Employee (demo limit 1)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const period = $('Set Period').first().json;\nconst rows = $input.first().json;\nconst list = Array.isArray(rows) ? rows : [];\nif (!list.length) {\n  throw new Error('No active employee found — seed DB and create employee + salary_data first.');\n}\nconst e = list[0];\nreturn [{ json: { employee_id: e.id, period_start: period.period_start, period_end: period.period_end, payment_date: period.payment_date } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "hcm02pick",
+      "name": "Pick Employee + Period"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/calculate_payroll",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  p_employee_id: $json.employee_id,\n  p_period_start: $json.period_start,\n  p_period_end: $json.period_end\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "id": "hcm02rpc",
+      "name": "RPC calculate_payroll"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Pick Employee + Period').first().json;\nconst raw = $input.first().json;\nconst row = Array.isArray(raw) ? raw[0] : raw;\nif (!row || row.gross_salary == null) {\n  throw new Error('RPC returned no payroll row');\n}\nreturn [{\n  json: {\n    employee_id: ctx.employee_id,\n    period_start: ctx.period_start,\n    period_end: ctx.period_end,\n    payment_date: ctx.payment_date,\n    gross_salary: row.gross_salary,\n    tax_deduction: row.tax_deduction,\n    social_security: row.social_security,\n    net_salary: row.net_salary\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "id": "hcm02map",
+      "name": "Map Payroll Insert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/payroll_runs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  employee_id: $json.employee_id,\n  period_start: $json.period_start,\n  period_end: $json.period_end,\n  gross_salary: $json.gross_salary,\n  tax_deduction: $json.tax_deduction,\n  social_security: $json.social_security,\n  net_salary: $json.net_salary,\n  payment_date: $json.payment_date,\n  status: 'processed'\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "id": "hcm02ins",
+      "name": "POST payroll_runs"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Run": { "main": [[{ "node": "Set Period", "type": "main", "index": 0 }]] },
+    "Set Period": { "main": [[{ "node": "GET Active Employee (demo limit 1)", "type": "main", "index": 0 }]] },
+    "GET Active Employee (demo limit 1)": { "main": [[{ "node": "Pick Employee + Period", "type": "main", "index": 0 }]] },
+    "Pick Employee + Period": { "main": [[{ "node": "RPC calculate_payroll", "type": "main", "index": 0 }]] },
+    "RPC calculate_payroll": { "main": [[{ "node": "Map Payroll Insert", "type": "main", "index": 0 }]] },
+    "Map Payroll Insert": { "main": [[{ "node": "POST payroll_runs", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

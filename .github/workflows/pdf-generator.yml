@@ -1,0 +1,21 @@
+name: HCM PDF stub
+
+on:
+  repository_dispatch:
+    types: [generate-payslip]
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo payload keys
+        run: |
+          echo "Received payslip request for repo dispatch (stub)."
+      - name: Callback (optional)
+        if: ${{ github.event.client_payload.callback_url != '' }}
+        env:
+          CALLBACK_URL: ${{ github.event.client_payload.callback_url }}
+        run: |
+          curl -sS -X POST "$CALLBACK_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"success":true,"pdf_url":"https://example.com/payslip-stub.pdf"}' || true

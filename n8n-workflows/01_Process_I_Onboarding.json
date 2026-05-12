@@ -1,0 +1,188 @@
+{
+  "name": "HCM 01 Process I — Candidate Apply",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hcm/candidate-apply",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "hcm01webhook",
+      "name": "Webhook Candidate Apply",
+      "webhookId": "hcm-candidate-apply"
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = $input.first().json;\nconst b = root.body && typeof root.body === 'object' ? root.body : root;\nconst email = (b.email || b.Email || '').trim();\nconst firstName = (b.firstName || b.first_name || '').trim();\nconst lastName = (b.lastName || b.last_name || '').trim();\nconst positionId = b.positionId || b.position_id;\nif (!email || !firstName || !lastName || !positionId) {\n  throw new Error('Missing required fields: email, firstName, lastName, positionId');\n}\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRe.test(email)) {\n  throw new Error('Invalid email');\n}\nreturn [{\n  json: {\n    email,\n    first_name: firstName,\n    last_name: lastName,\n    phone: b.phone || null,\n    date_of_birth: b.dateOfBirth || b.date_of_birth || null,\n    position_id: positionId,\n    application_data: {\n      experience: b.experience,\n      education: b.education,\n      skills: b.skills,\n      coverLetter: b.coverLetter || b.cover_letter\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "hcm01validate",
+      "name": "Validate and Normalize"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates?select=id&email=eq.{{ encodeURIComponent($json.email) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "hcm01get",
+      "name": "Supabase GET Candidate by Email",
+      "notes": "Set env SUPABASE_URL and SUPABASE_SERVICE_KEY in n8n. Or use Header Auth credential with static keys."
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Validate and Normalize').first().json;\nconst res = $input.first().json;\nconst list = Array.isArray(res) ? res : [];\nif (list.length > 0) {\n  return [{ json: { op: 'update', id: list[0].id, row } }];\n}\nreturn [{ json: { op: 'insert', row } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "hcm01decide",
+      "name": "Decide Insert vs Update"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            { "id": "c1", "leftValue": "={{ $json.op }}", "rightValue": "insert", "operator": { "type": "string", "operation": "equals" } }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, 0],
+      "id": "hcm01if",
+      "name": "IF Insert?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  first_name: $json.row.first_name,\n  last_name: $json.row.last_name,\n  email: $json.row.email,\n  phone: $json.row.phone,\n  date_of_birth: $json.row.date_of_birth,\n  position_id: $json.row.position_id,\n  application_data: $json.row.application_data,\n  status: 'applied'\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -120],
+      "id": "hcm01post",
+      "name": "Supabase POST Candidate"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  first_name: $json.row.first_name,\n  last_name: $json.row.last_name,\n  phone: $json.row.phone,\n  date_of_birth: $json.row.date_of_birth,\n  position_id: $json.row.position_id,\n  application_data: $json.row.application_data,\n  status: 'applied'\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 120],
+      "id": "hcm01patch",
+      "name": "Supabase PATCH Candidate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst c = Array.isArray(raw) ? raw[0] : raw;\nif (!c || !c.id) throw new Error('Upsert did not return candidate id');\nlet score = 50;\nif (c.qualification_score != null) score = Number(c.qualification_score);\nelse {\n  const ad = c.application_data || {};\n  const skills = (ad.skills || '').toString().split(',').filter(Boolean).length;\n  const edu = (ad.education || '').toString().length;\n  score = Math.min(100, 40 + skills * 5 + Math.min(20, Math.floor(edu / 5)));\n}\nreturn [{ json: { id: c.id, qualification_score: score, status: score >= 80 ? 'review' : 'applied' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0],
+      "id": "hcm01score",
+      "name": "Demo Score (replace with LLM)"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/candidates?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ qualification_score: $json.qualification_score, status: $json.status }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 0],
+      "id": "hcm01patchscore",
+      "name": "Supabase PATCH Score"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, candidate: $json }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1980, 0],
+      "id": "hcm01resp",
+      "name": "Respond 200"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Candidate Apply": { "main": [[{ "node": "Validate and Normalize", "type": "main", "index": 0 }]] },
+    "Validate and Normalize": { "main": [[{ "node": "Supabase GET Candidate by Email", "type": "main", "index": 0 }]] },
+    "Supabase GET Candidate by Email": { "main": [[{ "node": "Decide Insert vs Update", "type": "main", "index": 0 }]] },
+    "Decide Insert vs Update": { "main": [[{ "node": "IF Insert?", "type": "main", "index": 0 }]] },
+    "IF Insert?": {
+      "main": [
+        [{ "node": "Supabase POST Candidate", "type": "main", "index": 0 }],
+        [{ "node": "Supabase PATCH Candidate", "type": "main", "index": 0 }]
+      ]
+    },
+    "Supabase POST Candidate": { "main": [[{ "node": "Demo Score (replace with LLM)", "type": "main", "index": 0 }]] },
+    "Supabase PATCH Candidate": { "main": [[{ "node": "Demo Score (replace with LLM)", "type": "main", "index": 0 }]] },
+    "Demo Score (replace with LLM)": { "main": [[{ "node": "Supabase PATCH Score", "type": "main", "index": 0 }]] },
+    "Supabase PATCH Score": { "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}

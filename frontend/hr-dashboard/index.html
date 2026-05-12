@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HCM — HR Dashboard (Demo)</title>
+  <style>
+    body { font-family: system-ui; margin: 0; background: #f4f4f7; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 1.5rem; }
+    main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { padding: .65rem .75rem; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #fafafa; font-size: .85rem; color: #555; }
+  </style>
+</head>
+<body>
+  <header><strong>HCM HR</strong> — Bewerbungen (read-only via Supabase anon)</header>
+  <main>
+    <p id="err" style="color:#b71c1c"></p>
+    <table>
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Score</th><th>Status</th></tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </main>
+  <script src="dashboard.js"></script>
+</body>
+</html>
