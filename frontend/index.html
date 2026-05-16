@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HCM Demo — Übersicht</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="site.css" />
+  <style>
+    .hero {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 2rem 2rem 1.75rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 { margin: 0 0 0.5rem; font-size: 1.75rem; letter-spacing: -0.03em; }
+    .hero p { margin: 0; color: var(--muted); line-height: 1.55; max-width: 52ch; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .tile {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.35rem 1.5rem;
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 28px 70px rgba(22, 18, 40, 0.4);
+    }
+    .tile h2 { margin: 0 0 0.4rem; font-size: 1.1rem; }
+    .tile p { margin: 0; font-size: 0.9rem; color: var(--muted); line-height: 1.45; }
+    .tile .go { margin-top: 1rem; font-weight: 700; font-size: 0.85rem; color: #5b6cf0; }
+    footer {
+      max-width: 960px;
+      margin: 2rem auto 0;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    code { background: rgba(255,255,255,0.12); padding: 0.1rem 0.35rem; border-radius: 4px; }
+  </style>
+</head>
+<body class="shell">
+  <div class="topbar">
+    <a class="brand" href="./">🚴 <span>HCM Demo · Global Bike</span></a>
+    <span class="pill">Static UI → n8n → Supabase</span>
+  </div>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Willkommen zur HCM-Oberfläche</h1>
+      <p>
+        Drei statische Seiten für GitHub Pages: Bewerbungsportal (Webhook), HR-Übersicht (read-only über Anon-Key),
+        Employee-Portal (Stub). Vor Livegang <code>bewerbungsportal/config.js</code> und n8n-Webhooks setzen.
+      </p>
+    </div>
+    <div class="grid">
+      <a class="tile" href="bewerbungsportal/">
+        <h2>Bewerbungsportal</h2>
+        <p>Lädt offene Stellen aus Supabase, sendet Bewerbung per POST an n8n.</p>
+        <div class="go">Öffnen →</div>
+      </a>
+      <a class="tile" href="hr-dashboard/">
+        <h2>HR-Dashboard</h2>
+        <p>Tabelle der Kandidaten; Query-Parameter für URL/Key in <code>dashboard.js</code>.</p>
+        <div class="go">Öffnen →</div>
+      </a>
+      <a class="tile" href="employee-portal/">
+        <h2>Employee-Portal</h2>
+        <p>Stub für Gehaltsabrechnungen / Self-Service später.</p>
+        <div class="go">Öffnen →</div>
+      </a>
+    </div>
+  </div>
+  <footer>
+    Lokal testen: diese <code>index.html</code> im Browser öffnen oder nach Deploy unter
+    <code>https://&lt;user&gt;.github.io/&lt;repo&gt;/</code> — siehe <code>docs/GITHUB_PAGES.md</code>.
+  </footer>
+</body>
+</html>

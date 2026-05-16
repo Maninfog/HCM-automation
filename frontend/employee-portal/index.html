@@ -4,11 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HCM — Employee Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../site.css" />
+  <style>
+    body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; min-height: 100vh; }
+    .subnav {
+      max-width: 640px; margin: 0 auto; padding: 1rem 1.5rem 0;
+      display: flex; justify-content: space-between; color: #fff; font-size: 0.9rem;
+    }
+    .subnav a { color: #fff; }
+    main {
+      max-width: 640px; margin: 1rem auto 2rem; padding: 1.75rem;
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(22, 18, 40, 0.35);
+    }
+    h1 { margin: 0 0 0.5rem; font-size: 1.35rem; }
+    p { color: #555; line-height: 1.5; }
+    pre { background: #f4f4f7; padding: 1rem; border-radius: 8px; font-size: 0.85rem; overflow: auto; }
+  </style>
 </head>
-<body>
-  <h1>Employee Portal (Stub)</h1>
-  <p>Gehaltsabrechnungen könnten hier aus <code>payroll_runs</code> geladen werden (anon/service je nach Policy).</p>
-  <pre id="out"></pre>
+<body class="shell">
+  <nav class="subnav">
+    <a href="../index.html">← Übersicht</a>
+    <span>Employee</span>
+  </nav>
+  <main>
+    <h1>Employee Portal (Stub)</h1>
+    <p>Gehaltsabrechnungen könnten hier aus <code>payroll_runs</code> geladen werden (RLS/Keys beachten).</p>
+    <pre id="out"></pre>
+  </main>
   <script src="payslip.js"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ Referenz-Implementierung zum Guide in `docs/n8n_HCM_Complete_Build_Guide.md` (lo
 
 1. **Supabase:** SQL laut `docs/SETUP.md` ausführen.  
 2. **n8n:** `docker compose up`, Workflows aus `n8n-workflows/` importieren, Env-Variablen setzen.  
-3. **Frontend:** `frontend/bewerbungsportal/config.example.js` → `config.js` ausfüllen, statisch hosten.
+3. **Frontend:** Startseite `frontend/index.html` (Hub mit drei Apps). `frontend/bewerbungsportal/config.example.js` → `config.js` ausfüllen. **GitHub Pages:** `docs/GITHUB_PAGES.md` (Workflow deployt den Ordner `frontend/`).
 
 ## Ordner
 
@@ -17,8 +17,8 @@ Referenz-Implementierung zum Guide in `docs/n8n_HCM_Complete_Build_Guide.md` (lo
 | `supabase/migrations/` | Schema + RPC |
 | `supabase/seed/` | Demo-Daten + optional Payroll-Demo |
 | `n8n-workflows/` | 4 importierbare Workflows |
-| `frontend/` | Bewerbungsportal, HR-Dashboard, Employee-Portal (MVP) |
-| `.github/workflows/` | Stubs für `repository_dispatch` |
+| `frontend/` | Hub (`index.html`), Bewerbungsportal, HR-Dashboard, Employee-Portal (MVP) |
+| `.github/workflows/` | u. a. GitHub Pages Deploy (`pages.yml`) |
 | `docs/` | SETUP, API, WORKFLOWS + Original-Guide |
 
 ## Hinweise

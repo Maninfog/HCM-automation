@@ -4,23 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HCM — HR Dashboard (Demo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../site.css" />
   <style>
-    body { font-family: system-ui; margin: 0; background: #f4f4f7; }
-    header { background: #1a1a2e; color: #fff; padding: 1rem 1.5rem; }
-    main { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
-    th, td { padding: .65rem .75rem; border-bottom: 1px solid #eee; text-align: left; }
-    th { background: #fafafa; font-size: .85rem; color: #555; }
+    body { margin: 0; font-family: "DM Sans", system-ui, sans-serif; min-height: 100vh; }
+    .subnav {
+      max-width: 960px; margin: 0 auto; padding: 1rem 1.5rem 0;
+      display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 0.9rem;
+    }
+    .subnav a { color: #fff; }
+    main { max-width: 960px; margin: 1rem auto 2rem; padding: 0 1rem; }
+    .panel {
+      background: #fff; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(22, 18, 40, 0.35);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: .75rem 1rem; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #fafafa; font-size: .78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #666; }
+    tr:last-child td { border-bottom: 0; }
+    h1 { margin: 0; font-size: 1.15rem; padding: 1.25rem 1rem; background: #1a1a2e; color: #fff; }
   </style>
 </head>
-<body>
-  <header><strong>HCM HR</strong> — Bewerbungen (read-only via Supabase anon)</header>
+<body class="shell">
+  <nav class="subnav">
+    <a href="../index.html">← Übersicht</a>
+    <span>HR Dashboard</span>
+  </nav>
   <main>
-    <p id="err" style="color:#b71c1c"></p>
-    <table>
-      <thead><tr><th>Name</th><th>E-Mail</th><th>Score</th><th>Status</th></tr></thead>
-      <tbody id="tb"></tbody>
-    </table>
+    <div class="panel">
+      <h1>Bewerbungen</h1>
+      <p id="err" style="color:#b71c1c;padding:0 1rem"></p>
+      <table>
+        <thead><tr><th>Name</th><th>E-Mail</th><th>Score</th><th>Status</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
   </main>
   <script src="dashboard.js"></script>
 </body>

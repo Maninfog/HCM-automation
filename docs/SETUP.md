@@ -32,7 +32,7 @@ Mehr Infos: `supabase/RUN_IN_ORDER.md`.
 ### Docker (empfohlen)
 
 ```bash
-cd 02-projects/hcm-automation
+cd "02-projects/InfoSys2/RPA Prototyp/hcm-automation"
 cp .env.example .env
 # .env ausfüllen: SUPABASE_URL, SUPABASE_SERVICE_KEY, optional SLACK_WEBHOOK_URL
 docker compose up -d

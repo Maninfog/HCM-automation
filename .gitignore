@@ -1,3 +1,6 @@
 .env
 node_modules/
 .DS_Store
+
+# Lokale Kopien mit echten Keys (werden nicht gepusht)
+n8n-workflows/*.local.json

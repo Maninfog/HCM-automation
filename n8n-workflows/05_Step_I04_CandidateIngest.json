@@ -1,0 +1,180 @@
+{
+  "name": "HCM Step I-04 — CandidateIngest [ROBOT]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hcm/step/i04-candidate-ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "i04_webhook",
+      "name": "Webhook — I-04 Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = $input.first().json;\nconst b = root.body && typeof root.body === 'object' ? root.body : root;\nconst email = (b.email || b.Email || '').trim();\nconst firstName = (b.firstName || b.first_name || '').trim();\nconst lastName = (b.lastName || b.last_name || '').trim();\nconst positionId = b.positionId || b.position_id;\nif (!email || !firstName || !lastName || !positionId) {\n  throw new Error('Missing required fields: email, firstName, lastName, positionId');\n}\nconst emailRe = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRe.test(email)) throw new Error('Invalid email format');\nreturn [{ json: {\n  email,\n  first_name: firstName,\n  last_name: lastName,\n  phone: b.phone || null,\n  date_of_birth: b.dateOfBirth || b.date_of_birth || null,\n  position_id: positionId,\n  status: 'applied',\n  application_data: {\n    experience: b.experience || null,\n    education: b.education || null,\n    skills: b.skills || [],\n    coverLetter: b.coverLetter || b.cover_letter || null\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "i04_validate",
+      "name": "Validate & Normalize"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?on_conflict=email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "i04_upsert",
+      "name": "Upsert Candidate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json;\nconst candidate = Array.isArray(rows) ? rows[0] : rows;\nconst appData = candidate.application_data || {};\nlet score = 50;\nif (appData.experience) score += 15;\nif (appData.education) score += 15;\nif ((appData.skills || []).length > 0) score += 10;\nif (appData.coverLetter || appData.cover_letter) score += 10;\nscore = Math.min(100, score);\nconst status = score >= 80 ? 'shortlisted' : 'applied';\nreturn [{ json: {\n  id: candidate.id,\n  first_name: candidate.first_name,\n  last_name: candidate.last_name,\n  email: candidate.email,\n  position_id: candidate.position_id,\n  qualification_score: score,\n  status\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "i04_score",
+      "name": "Calculate Score"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ qualification_score: $json.qualification_score, status: $json.status }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "id": "i04_updatescore",
+      "name": "Update Score in Supabase"
+    },
+    {
+      "parameters": {
+        "jsCode": "const scored = $('Calculate Score').first().json;\nconst updated = $input.first().json;\nconst row = Array.isArray(updated) ? updated[0] : updated;\nreturn [{ json: {\n  id: row.id || scored.id,\n  first_name: row.first_name || scored.first_name,\n  last_name: row.last_name || scored.last_name,\n  email: row.email || scored.email,\n  position_id: row.position_id || scored.position_id,\n  qualification_score: row.qualification_score !== undefined ? row.qualification_score : scored.qualification_score,\n  status: row.status || scored.status\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0],
+      "id": "i04_merge",
+      "name": "Merge Candidate Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/process_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  process_id: $json.id,\n  process_type: 'onboarding',\n  step_code: 'I-04',\n  path_type: 'robot',\n  status: 'success',\n  message: 'Kandidat ' + $json.first_name + ' ' + $json.last_name + ' verarbeitet. Score: ' + $json.qualification_score,\n  payload: { candidate_id: $json.id, score: $json.qualification_score, candidate_status: $json.status }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "id": "i04_logevent",
+      "name": "Log process_event [ROBOT]"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $('Merge Candidate Data').first().json;\nconst subject = '[ROBOT \u2713] I-04 abgeschlossen \u2013 ' + c.first_name + ' ' + c.last_name;\nconst scoreColor = c.qualification_score >= 80 ? '#065f46' : '#92400e';\nconst scoreBg = c.qualification_score >= 80 ? '#d1fae5' : '#fef3c7';\nconst html = '<div style=\"font-family:sans-serif;max-width:560px;margin:0 auto\">' +\n  '<div style=\"background:#1a1a2e;padding:20px 24px;border-radius:8px 8px 0 0\">' +\n  '<span style=\"color:#fff;font-weight:700;font-size:16px\">HCM Robot \u00b7 Schritt I-04 abgeschlossen</span>' +\n  '</div>' +\n  '<div style=\"background:#f8f9fa;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e9ecef\">' +\n  '<table style=\"width:100%;font-size:14px;border-collapse:collapse\">' +\n  '<tr><td style=\"padding:8px 0;color:#868e96;width:130px\">Schritt</td><td style=\"padding:8px 0;font-weight:600\">I-04 \u2013 CandidateIngest</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Pfad</td><td style=\"padding:8px 0\"><span style=\"background:#dbeafe;color:#1d4ed8;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700\">ROBOT</span></td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Kandidat</td><td style=\"padding:8px 0;font-weight:600\">' + c.first_name + ' ' + c.last_name + '</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">E-Mail</td><td style=\"padding:8px 0\">' + c.email + '</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Score</td><td style=\"padding:8px 0\"><span style=\"background:' + scoreBg + ';color:' + scoreColor + ';padding:2px 10px;border-radius:4px;font-weight:700\">' + c.qualification_score + ' / 100</span></td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Status</td><td style=\"padding:8px 0\">' + c.status + '</td></tr>' +\n  '</table>' +\n  '<div style=\"margin-top:20px\">' +\n  '<p style=\"margin:0 0 8px;font-size:13px;color:#495057\">N\u00e4chster Schritt: <strong>I-05 (HUMAN)</strong> \u2013 HR-Entscheidung erforderlich.</p>' +\n  '</div>' +\n  '</div></div>';\nreturn [{ json: { subject, html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0],
+      "id": "i04_prepareMail",
+      "name": "Prepare Email"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer YOUR_RESEND_API_KEY" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'onboarding@resend.dev', to: ['YOUR_HR_NOTIFY_EMAIL'], subject: $json.subject, html: $json.html }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 0],
+      "id": "i04_sendMail",
+      "name": "Send Mail [Robot done]"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, step: 'I-04', path: 'robot', candidate_id: $('Merge Candidate Data').first().json.id, score: $('Merge Candidate Data').first().json.qualification_score }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1980, 0],
+      "id": "i04_respond",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — I-04 Trigger":    { "main": [[{ "node": "Validate & Normalize",       "type": "main", "index": 0 }]] },
+    "Validate & Normalize":      { "main": [[{ "node": "Upsert Candidate",            "type": "main", "index": 0 }]] },
+    "Upsert Candidate":          { "main": [[{ "node": "Calculate Score",             "type": "main", "index": 0 }]] },
+    "Calculate Score":           { "main": [[{ "node": "Update Score in Supabase",    "type": "main", "index": 0 }]] },
+    "Update Score in Supabase":  { "main": [[{ "node": "Merge Candidate Data",        "type": "main", "index": 0 }]] },
+    "Merge Candidate Data":      { "main": [[{ "node": "Log process_event [ROBOT]",   "type": "main", "index": 0 }]] },
+    "Log process_event [ROBOT]": { "main": [[{ "node": "Prepare Email",               "type": "main", "index": 0 }]] },
+    "Prepare Email":             { "main": [[{ "node": "Send Mail [Robot done]",      "type": "main", "index": 0 }]] },
+    "Send Mail [Robot done]":    { "main": [[{ "node": "Respond",                     "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": [{ "name": "robot" }, { "name": "process-i" }, { "name": "step-i04" }]
+}

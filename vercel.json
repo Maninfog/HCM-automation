@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "frontend",
+  "rewrites": [
+    { "source": "/bewerbungsportal/(.*)", "destination": "/bewerbungsportal/$1" },
+    { "source": "/hr-dashboard/(.*)",     "destination": "/hr-dashboard/$1" },
+    { "source": "/employee-portal/(.*)",  "destination": "/employee-portal/$1" },
+    { "source": "/(.*)",                  "destination": "/$1" }
+  ]
+}

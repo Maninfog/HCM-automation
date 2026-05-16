@@ -11,7 +11,7 @@ Auf github.com: **New repository** → z. B. `hcm-automation` → **ohne** REA
 Im Terminal (Pfade anpassen):
 
 ```bash
-cd "/Users/maxi/Downloads/ClaudeCursorWorkspace copy/02-projects/hcm-automation"
+cd "02-projects/InfoSys2/RPA Prototyp/hcm-automation"
 git remote add origin https://github.com/DEIN_USER/hcm-automation.git
 git push -u origin main
 ```
@@ -26,10 +26,10 @@ git push -u origin main
 ## 3. GitHub CLI (optional)
 
 ```bash
-cd "/Users/maxi/Downloads/ClaudeCursorWorkspace copy/02-projects/hcm-automation"
+cd "02-projects/InfoSys2/RPA Prototyp/hcm-automation"
 gh repo create hcm-automation --private --source=. --remote=origin --push
 ```
 
 ## Hinweis zum übergeordneten Repo
 
-Der Workspace `ClaudeCursorWorkspace copy` kann `hcm-automation/` als normalen Ordner sehen. Wenn du dort **kein** verschachteltes Repo willst, `hcm-automation` aus dem Parent-Repo aus `.gitignore` ausschließen oder das Projekt physisch nach `~/repos/hcm-automation` verschieben.
+Der übergeordnete Cursor-Workspace kann `02-projects/InfoSys2/RPA Prototyp/hcm-automation/` als normalen Ordner sehen. Wenn du dort **kein** verschachteltes Repo willst, diesen Ordner im Parent-Repo per `.gitignore` ausschließen oder das Projekt physisch nach `~/repos/hcm-automation` verschieben.

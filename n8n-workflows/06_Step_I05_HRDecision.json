@@ -1,0 +1,161 @@
+{
+  "name": "HCM Step I-05 — HRDecision [HUMAN]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hcm/step/i05-hr-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "i05_webhook",
+      "name": "Webhook — I-05 HR Decision"
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = $input.first().json;\nconst b = root.body && typeof root.body === 'object' ? root.body : root;\nconst candidateId = b.candidateId || b.candidate_id;\nconst decision = (b.decision || '').toLowerCase();\nconst allowed = ['hire', 'interview', 'reject'];\nif (!candidateId || !allowed.includes(decision)) {\n  throw new Error('candidateId and decision (hire|interview|reject) required');\n}\nconst statusMap = { hire: 'hired', interview: 'interview', reject: 'rejected' };\nreturn [{ json: {\n  candidate_id: candidateId,\n  decision,\n  status: statusMap[decision],\n  notes: b.comments || b.notes || null\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "i05_validate",
+      "name": "Validate Decision"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.{{ $json.candidate_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: $json.status, notes: $json.notes }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "i05_patch",
+      "name": "PATCH Candidate Status"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/process_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  process_id: $('Validate Decision').first().json.candidate_id,\n  process_type: 'onboarding',\n  step_code: 'I-05',\n  path_type: 'human',\n  status: 'success',\n  message: 'HR-Entscheidung: ' + $('Validate Decision').first().json.decision,\n  payload: { decision: $('Validate Decision').first().json.decision, new_status: $('Validate Decision').first().json.status }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "id": "i05_logevent",
+      "name": "Log process_event [HUMAN]"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "hire_check",
+              "leftValue": "={{ $('Validate Decision').first().json.decision }}",
+              "rightValue": "hire",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, 0],
+      "id": "i05_ifHire",
+      "name": "IF hire?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ http://localhost:5678 }}/webhook/hcm/step/i07-hire-candidate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ candidateId: $('Validate Decision').first().json.candidate_id }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -80],
+      "id": "i05_triggerI07",
+      "name": "Trigger I-07 [hire]"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, step: 'I-05', path: 'human', decision: $('Validate Decision').first().json.decision, next: $('Validate Decision').first().json.decision === 'hire' ? 'I-07 triggered' : 'process ended' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, -80],
+      "id": "i05_respondHire",
+      "name": "Respond [hire]"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, step: 'I-05', path: 'human', decision: $('Validate Decision').first().json.decision }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 120],
+      "id": "i05_respondOther",
+      "name": "Respond [other]"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — I-05 HR Decision": { "main": [[{ "node": "Validate Decision",         "type": "main", "index": 0 }]] },
+    "Validate Decision":          { "main": [[{ "node": "PATCH Candidate Status",     "type": "main", "index": 0 }]] },
+    "PATCH Candidate Status":     { "main": [[{ "node": "Log process_event [HUMAN]",  "type": "main", "index": 0 }]] },
+    "Log process_event [HUMAN]":  { "main": [[{ "node": "IF hire?",                   "type": "main", "index": 0 }]] },
+    "IF hire?": {
+      "main": [
+        [{ "node": "Trigger I-07 [hire]", "type": "main", "index": 0 }],
+        [{ "node": "Respond [other]",     "type": "main", "index": 0 }]
+      ]
+    },
+    "Trigger I-07 [hire]": { "main": [[{ "node": "Respond [hire]", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": [{ "name": "human" }, { "name": "process-i" }, { "name": "step-i05" }]
+}

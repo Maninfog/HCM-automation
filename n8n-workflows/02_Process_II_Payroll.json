@@ -1,13 +1,18 @@
 {
-  "name": "HCM 02 Process II — Payroll (demo)",
+  "name": "HCM 02 Process II — Payroll [ROBOT]",
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hcm/step/ii-payroll-run",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
       "position": [0, 0],
-      "id": "hcm02man",
-      "name": "Manual Run"
+      "id": "hcm02webhook",
+      "name": "Webhook — Payroll Run"
     },
     {
       "parameters": {
@@ -21,12 +26,12 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/employees?status=eq.active&select=id,email,personnel_number&limit=1",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/employees?status=eq.active&select=id,email,personnel_number,first_name,last_name&limit=1",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" }
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" }
           ]
         },
         "options": {}
@@ -35,11 +40,11 @@
       "typeVersion": 4.2,
       "position": [440, 0],
       "id": "hcm02emp",
-      "name": "GET Active Employee (demo limit 1)"
+      "name": "GET Active Employee"
     },
     {
       "parameters": {
-        "jsCode": "const period = $('Set Period').first().json;\nconst rows = $input.first().json;\nconst list = Array.isArray(rows) ? rows : [];\nif (!list.length) {\n  throw new Error('No active employee found — seed DB and create employee + salary_data first.');\n}\nconst e = list[0];\nreturn [{ json: { employee_id: e.id, period_start: period.period_start, period_end: period.period_end, payment_date: period.payment_date } }];"
+        "jsCode": "const period = $('Set Period').first().json;\nconst rows = $input.first().json;\nconst list = Array.isArray(rows) ? rows : [];\nif (!list.length) {\n  throw new Error('No active employee found — seed DB first.');\n}\nconst e = list[0];\nreturn [{ json: {\n  employee_id: e.id,\n  first_name: e.first_name,\n  last_name: e.last_name,\n  personnel_number: e.personnel_number,\n  period_start: period.period_start,\n  period_end: period.period_end,\n  payment_date: period.payment_date\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -50,12 +55,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/calculate_payroll",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/rpc/calculate_payroll",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -71,23 +76,23 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Pick Employee + Period').first().json;\nconst raw = $input.first().json;\nconst row = Array.isArray(raw) ? raw[0] : raw;\nif (!row || row.gross_salary == null) {\n  throw new Error('RPC returned no payroll row');\n}\nreturn [{\n  json: {\n    employee_id: ctx.employee_id,\n    period_start: ctx.period_start,\n    period_end: ctx.period_end,\n    payment_date: ctx.payment_date,\n    gross_salary: row.gross_salary,\n    tax_deduction: row.tax_deduction,\n    social_security: row.social_security,\n    net_salary: row.net_salary\n  }\n}];"
+        "jsCode": "const ctx = $('Pick Employee + Period').first().json;\nconst raw = $input.first().json;\nconst row = Array.isArray(raw) ? raw[0] : raw;\nif (!row || row.gross_salary == null) {\n  throw new Error('RPC returned no payroll row');\n}\nreturn [{\n  json: {\n    employee_id: ctx.employee_id,\n    first_name: ctx.first_name,\n    last_name: ctx.last_name,\n    personnel_number: ctx.personnel_number,\n    period_start: ctx.period_start,\n    period_end: ctx.period_end,\n    payment_date: ctx.payment_date,\n    gross_salary: row.gross_salary,\n    tax_deduction: row.tax_deduction,\n    social_security: row.social_security,\n    net_salary: row.net_salary\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1100, 0],
       "id": "hcm02map",
-      "name": "Map Payroll Insert"
+      "name": "Map Payroll Data"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/payroll_runs",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/payroll_runs",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
             { "name": "Content-Type", "value": "application/json" },
             { "name": "Prefer", "value": "return=representation" }
           ]
@@ -101,19 +106,90 @@
       "position": [1320, 0],
       "id": "hcm02ins",
       "name": "POST payroll_runs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/process_events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  process_id: $('Map Payroll Data').first().json.employee_id,\n  process_type: 'payroll',\n  step_code: 'II-04',\n  path_type: 'robot',\n  status: 'success',\n  message: 'Gehaltsabrechnung ' + $('Map Payroll Data').first().json.period_start + ' bis ' + $('Map Payroll Data').first().json.period_end + ' abgeschlossen',\n  payload: {\n    personnel_number: $('Map Payroll Data').first().json.personnel_number,\n    gross_salary: $('Map Payroll Data').first().json.gross_salary,\n    net_salary: $('Map Payroll Data').first().json.net_salary,\n    payment_date: $('Map Payroll Data').first().json.payment_date\n  }\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 0],
+      "id": "hcm02logevent",
+      "name": "Log process_event [ROBOT]"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Map Payroll Data').first().json;\nconst subject = '[ROBOT \u2713] II-04 Payroll abgeschlossen \u2013 ' + d.first_name + ' ' + d.last_name;\nconst html = '<div style=\"font-family:sans-serif;max-width:560px;margin:0 auto\">' +\n  '<div style=\"background:#1a1a2e;padding:20px 24px;border-radius:8px 8px 0 0\">' +\n  '<span style=\"color:#fff;font-weight:700;font-size:16px\">HCM Robot \u00b7 Prozess II \u2013 Payroll</span>' +\n  '</div>' +\n  '<div style=\"background:#f8f9fa;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e9ecef\">' +\n  '<div style=\"background:#d1fae5;border:1px solid #a7f3d0;border-radius:6px;padding:12px 16px;margin-bottom:20px\">' +\n  '<p style=\"margin:0;font-size:14px;color:#065f46;font-weight:600\">\u2705 Gehaltsabrechnung erfolgreich verarbeitet.</p>' +\n  '</div>' +\n  '<table style=\"width:100%;font-size:14px;border-collapse:collapse\">' +\n  '<tr><td style=\"padding:8px 0;color:#868e96;width:150px\">Schritt</td><td style=\"padding:8px 0;font-weight:600\">II-04 \u2013 Payroll Run</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Pfad</td><td style=\"padding:8px 0\"><span style=\"background:#dbeafe;color:#1d4ed8;padding:2px 10px;border-radius:4px;font-size:12px;font-weight:700\">ROBOT</span></td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Mitarbeiter</td><td style=\"padding:8px 0;font-weight:600\">' + d.first_name + ' ' + d.last_name + ' (' + d.personnel_number + ')</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Zeitraum</td><td style=\"padding:8px 0\">' + d.period_start + ' \u2013 ' + d.period_end + '</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Brutto</td><td style=\"padding:8px 0;font-weight:600\">' + Number(d.gross_salary).toFixed(2) + ' \u20ac</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Netto</td><td style=\"padding:8px 0;font-weight:600;color:#065f46\">' + Number(d.net_salary).toFixed(2) + ' \u20ac</td></tr>' +\n  '<tr><td style=\"padding:8px 0;color:#868e96\">Zahlungsdatum</td><td style=\"padding:8px 0\">' + d.payment_date + '</td></tr>' +\n  '</table>' +\n  '</div></div>';\nreturn [{ json: { subject, html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 0],
+      "id": "hcm02prepareMail",
+      "name": "Prepare Payroll Mail"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer YOUR_RESEND_API_KEY" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: 'onboarding@resend.dev', to: ['YOUR_HR_NOTIFY_EMAIL'], subject: $json.subject, html: $json.html }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 0],
+      "id": "hcm02sendMail",
+      "name": "Send Payroll Mail"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, step: 'II-04', path: 'robot', employee: $('Map Payroll Data').first().json.first_name + ' ' + $('Map Payroll Data').first().json.last_name, net_salary: $('Map Payroll Data').first().json.net_salary, period: $('Map Payroll Data').first().json.period_start + ' / ' + $('Map Payroll Data').first().json.period_end }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2200, 0],
+      "id": "hcm02respond",
+      "name": "Respond"
     }
   ],
   "pinData": {},
   "connections": {
-    "Manual Run": { "main": [[{ "node": "Set Period", "type": "main", "index": 0 }]] },
-    "Set Period": { "main": [[{ "node": "GET Active Employee (demo limit 1)", "type": "main", "index": 0 }]] },
-    "GET Active Employee (demo limit 1)": { "main": [[{ "node": "Pick Employee + Period", "type": "main", "index": 0 }]] },
-    "Pick Employee + Period": { "main": [[{ "node": "RPC calculate_payroll", "type": "main", "index": 0 }]] },
-    "RPC calculate_payroll": { "main": [[{ "node": "Map Payroll Insert", "type": "main", "index": 0 }]] },
-    "Map Payroll Insert": { "main": [[{ "node": "POST payroll_runs", "type": "main", "index": 0 }]] }
+    "Webhook — Payroll Run":   { "main": [[{ "node": "Set Period",               "type": "main", "index": 0 }]] },
+    "Set Period":              { "main": [[{ "node": "GET Active Employee",       "type": "main", "index": 0 }]] },
+    "GET Active Employee":     { "main": [[{ "node": "Pick Employee + Period",    "type": "main", "index": 0 }]] },
+    "Pick Employee + Period":  { "main": [[{ "node": "RPC calculate_payroll",    "type": "main", "index": 0 }]] },
+    "RPC calculate_payroll":   { "main": [[{ "node": "Map Payroll Data",         "type": "main", "index": 0 }]] },
+    "Map Payroll Data":        { "main": [[{ "node": "POST payroll_runs",        "type": "main", "index": 0 }]] },
+    "POST payroll_runs":       { "main": [[{ "node": "Log process_event [ROBOT]","type": "main", "index": 0 }]] },
+    "Log process_event [ROBOT]":{ "main": [[{ "node": "Prepare Payroll Mail",   "type": "main", "index": 0 }]] },
+    "Prepare Payroll Mail":    { "main": [[{ "node": "Send Payroll Mail",        "type": "main", "index": 0 }]] },
+    "Send Payroll Mail":       { "main": [[{ "node": "Respond",                 "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1" },
   "meta": { "templateCredsSetupCompleted": false },
-  "tags": []
+  "tags": [{ "name": "robot" }, { "name": "process-ii" }, { "name": "step-ii04" }]
 }
