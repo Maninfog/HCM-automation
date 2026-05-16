@@ -44,7 +44,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const period = $('Set Period').first().json;\nconst rows = $input.first().json;\nconst list = Array.isArray(rows) ? rows : [];\nif (!list.length) {\n  throw new Error('No active employee found — seed DB first.');\n}\nconst e = list[0];\nreturn [{ json: {\n  employee_id: e.id,\n  first_name: e.first_name,\n  last_name: e.last_name,\n  personnel_number: e.personnel_number,\n  period_start: period.period_start,\n  period_end: period.period_end,\n  payment_date: period.payment_date\n} }];"
+        "jsCode": "const period = $('Set Period').first().json;\nconst rows = $input.first().json;\n// n8n splits JSON arrays into items, so rows may be a single object\nconst e = Array.isArray(rows) ? rows[0] : rows;\nif (!e || !e.id) {\n  throw new Error('No active employee found — seed DB first.');\n}\nreturn [{ json: {\n  employee_id: e.id,\n  first_name: e.first_name,\n  last_name: e.last_name,\n  personnel_number: e.personnel_number,\n  period_start: period.period_start,\n  period_end: period.period_end,\n  payment_date: period.payment_date\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

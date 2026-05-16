@@ -61,7 +61,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.{{ $json.id }}",
+        "url": "={{ 'https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.' + $json.id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

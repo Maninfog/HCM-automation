@@ -26,7 +26,7 @@
     },
     {
       "parameters": {
-        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.{{ $json.candidate_id }}&select=*",
+        "url": "={{ 'https://yozyspuriehckddkhina.supabase.co/rest/v1/candidates?id=eq.' + $json.candidate_id + '&select=*' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -57,7 +57,13 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={}",
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -67,7 +73,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const candidateArr = $('GET Candidate').first().json;\nconst candidate = Array.isArray(candidateArr) ? candidateArr[0] : candidateArr;\nconst pnRaw = $input.first().json;\nconst personnelNumber = typeof pnRaw === 'string' ? pnRaw : (pnRaw.generate_personnel_number || Object.values(pnRaw)[0] || 'EMP00001');\nconst today = new Date().toISOString().split('T')[0];\nif (!candidate || !candidate.id) throw new Error('Candidate not found');\nreturn [{ json: {\n  personnel_number: personnelNumber,\n  candidate_id: candidate.id,\n  first_name: candidate.first_name,\n  last_name: candidate.last_name,\n  email: candidate.email,\n  phone: candidate.phone || null,\n  date_of_birth: candidate.date_of_birth || today,\n  position_id: candidate.position_id || null,\n  org_unit_id: candidate.org_unit_id || null,\n  start_date: today,\n  status: 'active'\n} }];"
+        "jsCode": "const candidateArr = $('GET Candidate').first().json;\nconst candidate = Array.isArray(candidateArr) ? candidateArr[0] : candidateArr;\nconst pnRaw = $input.first().json;\n// text format: response comes as { data: '\"EMP001\"' } or { data: 'EMP001' }\nlet personnelNumber;\nif (pnRaw.data !== undefined) {\n  personnelNumber = String(pnRaw.data).replace(/^\"|\"$/g, '').trim();\n} else if (typeof pnRaw === 'string') {\n  personnelNumber = pnRaw.replace(/^\"|\"$/g, '').trim();\n} else {\n  personnelNumber = pnRaw.generate_personnel_number || Object.values(pnRaw)[0] || 'EMP00001';\n}\nif (!personnelNumber || personnelNumber === 'null') personnelNumber = 'EMP' + Date.now();\nconst today = new Date().toISOString().split('T')[0];\nif (!candidate || !candidate.id) throw new Error('Candidate not found');\nreturn [{ json: {\n  personnel_number: personnelNumber,\n  candidate_id: candidate.id,\n  first_name: candidate.first_name,\n  last_name: candidate.last_name,\n  email: candidate.email,\n  phone: candidate.phone || null,\n  date_of_birth: candidate.date_of_birth || today,\n  position_id: candidate.position_id || null,\n  org_unit_id: candidate.org_unit_id || null,\n  start_date: today,\n  status: 'active'\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -85,7 +91,7 @@
             { "name": "apikey", "value": "=YOUR_SUPABASE_SERVICE_ROLE_KEY" },
             { "name": "Authorization", "value": "=Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
             { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=representation" }
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
           ]
         },
         "sendBody": true,
@@ -102,7 +108,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/positions?id=eq.{{ $('Assemble Employee Data').first().json.position_id }}",
+        "url": "={{ 'https://yozyspuriehckddkhina.supabase.co/rest/v1/positions?id=eq.' + $('Assemble Employee Data').first().json.position_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
