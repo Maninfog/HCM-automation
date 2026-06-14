@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAllEvents, useCandidates } from "@/lib/api";
 import { KpiCard } from "@/components/common/KpiCard";
 import { PathBadge } from "@/components/common/PathBadge";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PathLegend } from "@/components/process/ProcessTimeline";
-import { Activity, AlertTriangle, Bot, UserCheck } from "lucide-react";
+import { Activity, AlertTriangle, Bot, UserCheck, PlayCircle, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ENV } from "@/lib/env";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/hr/")({
   component: OverviewPage,
@@ -18,6 +22,34 @@ export const Route = createFileRoute("/hr/")({
 
 function OverviewPage() {
   const { data: candData } = useCandidates();
+  const [payrollLoading, setPayrollLoading] = useState(false);
+  const [payrollDone, setPayrollDone] = useState(false);
+
+  async function handlePayrollRun() {
+    const webhookUrl = (ENV as any).N8N_PAYROLL_WEBHOOK ?? "http://localhost:5678/webhook/hcm/step/ii-payroll-run";
+    setPayrollLoading(true);
+    setPayrollDone(false);
+    try {
+      const period = new Date().toISOString().slice(0, 7);
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period, initiatedBy: "hr-dashboard" }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setPayrollDone(true);
+      toast.success("Payroll-Run gestartet", { description: `Periode ${period} wird verarbeitet. Du erhältst eine E-Mail.` });
+      setTimeout(() => setPayrollDone(false), 5000);
+    } catch (e: any) {
+      toast.error("Payroll-Webhook nicht erreichbar", { description: "Stelle sicher dass n8n läuft (localhost:5678)." });
+    } finally {
+      setPayrollLoading(false);
+    }
+  }
   const { data: evData } = useAllEvents();
 
   const candidates = candData?.data ?? [];
@@ -39,11 +71,26 @@ function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">HR Overview</h1>
-        <p className="text-sm text-muted-foreground">
-          Onboarding-Pipeline · Human/Robot-Sichtbarkeit auf jeder Stufe
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">HR Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            Onboarding-Pipeline · Human/Robot-Sichtbarkeit auf jeder Stufe
+          </p>
+        </div>
+        <Button
+          onClick={handlePayrollRun}
+          disabled={payrollLoading}
+          variant={payrollDone ? "outline" : "default"}
+          className="gap-2"
+        >
+          {payrollDone
+            ? <><CheckCircle2 className="h-4 w-4 text-green-500" /> Payroll gestartet</>
+            : payrollLoading
+              ? <><Bot className="h-4 w-4 animate-spin" /> Verarbeite …</>
+              : <><PlayCircle className="h-4 w-4" /> Payroll-Run starten</>
+          }
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
