@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HrRouteImport } from './routes/hr'
 import { Route as ApplyRouteImport } from './routes/apply'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HrIndexRouteImport } from './routes/hr.index'
 import { Route as HrCandidatesRouteImport } from './routes/hr.candidates'
+import { Route as HrPayrollRouteImport } from './routes/hr.payroll'
 import { Route as HrProcessIdRouteImport } from './routes/hr.process.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -32,6 +34,11 @@ const ApplyRoute = ApplyRouteImport.update({
   path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -47,6 +54,11 @@ const HrCandidatesRoute = HrCandidatesRouteImport.update({
   path: '/candidates',
   getParentRoute: () => HrRoute,
 } as any)
+const HrPayrollRoute = HrPayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
+  getParentRoute: () => HrRoute,
+} as any)
 const HrProcessIdRoute = HrProcessIdRouteImport.update({
   id: '/process/$id',
   path: '/process/$id',
@@ -56,17 +68,21 @@ const HrProcessIdRoute = HrProcessIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/apply': typeof ApplyRoute
+  '/onboarding': typeof OnboardingRoute
   '/hr': typeof HrRouteWithChildren
   '/login': typeof LoginRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/payroll': typeof HrPayrollRoute
   '/hr/': typeof HrIndexRoute
   '/hr/process/$id': typeof HrProcessIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apply': typeof ApplyRoute
+  '/onboarding': typeof OnboardingRoute
   '/login': typeof LoginRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/payroll': typeof HrPayrollRoute
   '/hr': typeof HrIndexRoute
   '/hr/process/$id': typeof HrProcessIdRoute
 }
@@ -74,9 +90,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/apply': typeof ApplyRoute
+  '/onboarding': typeof OnboardingRoute
   '/hr': typeof HrRouteWithChildren
   '/login': typeof LoginRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/payroll': typeof HrPayrollRoute
   '/hr/': typeof HrIndexRoute
   '/hr/process/$id': typeof HrProcessIdRoute
 }
@@ -85,20 +103,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/apply'
+    | '/onboarding'
     | '/hr'
     | '/login'
     | '/hr/candidates'
+    | '/hr/payroll'
     | '/hr/'
     | '/hr/process/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/apply' | '/login' | '/hr/candidates' | '/hr' | '/hr/process/$id'
+  to: '/' | '/apply' | '/onboarding' | '/login' | '/hr/candidates' | '/hr/payroll' | '/hr' | '/hr/process/$id'
   id:
     | '__root__'
     | '/'
     | '/apply'
+    | '/onboarding'
     | '/hr'
     | '/login'
     | '/hr/candidates'
+    | '/hr/payroll'
     | '/hr/'
     | '/hr/process/$id'
   fileRoutesById: FileRoutesById
@@ -106,6 +128,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApplyRoute: typeof ApplyRoute
+  OnboardingRoute: typeof OnboardingRoute
   HrRoute: typeof HrRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
@@ -133,6 +156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -154,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrCandidatesRouteImport
       parentRoute: typeof HrRoute
     }
+    '/hr/payroll': {
+      id: '/hr/payroll'
+      path: '/payroll'
+      fullPath: '/hr/payroll'
+      preLoaderRoute: typeof HrPayrollRouteImport
+      parentRoute: typeof HrRoute
+    }
     '/hr/process/$id': {
       id: '/hr/process/$id'
       path: '/process/$id'
@@ -166,12 +203,14 @@ declare module '@tanstack/react-router' {
 
 interface HrRouteChildren {
   HrCandidatesRoute: typeof HrCandidatesRoute
+  HrPayrollRoute: typeof HrPayrollRoute
   HrIndexRoute: typeof HrIndexRoute
   HrProcessIdRoute: typeof HrProcessIdRoute
 }
 
 const HrRouteChildren: HrRouteChildren = {
   HrCandidatesRoute: HrCandidatesRoute,
+  HrPayrollRoute: HrPayrollRoute,
   HrIndexRoute: HrIndexRoute,
   HrProcessIdRoute: HrProcessIdRoute,
 }
@@ -181,6 +220,7 @@ const HrRouteWithChildren = HrRoute._addFileChildren(HrRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApplyRoute: ApplyRoute,
+  OnboardingRoute: OnboardingRoute,
   HrRoute: HrRouteWithChildren,
   LoginRoute: LoginRoute,
 }
