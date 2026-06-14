@@ -17,11 +17,16 @@ async function fetchCandidates(): Promise<Sourced<Candidate[]>> {
       .select("*")
       .order("updated_at", { ascending: false });
     if (error) throw error;
+    // Also fetch positions to resolve titles
+    const { data: posData } = await sb.from("positions").select("id, position_title");
+    const posMap: Record<string, string> = {};
+    for (const p of posData ?? []) posMap[p.id] = (p as any).position_title ?? p.id;
+
     const mapped: Candidate[] = (data || []).map((c: any) => ({
       ...c,
       full_name: c.full_name ?? `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim(),
       score: c.score ?? c.qualification_score ?? 0,
-      position_title: c.position_title ?? "—",
+      position_title: posMap[c.position_id] ?? c.position_title ?? "—",
       last_step: c.last_step ?? c.status ?? "—",
       last_path: c.last_path ?? "robot",
     }));

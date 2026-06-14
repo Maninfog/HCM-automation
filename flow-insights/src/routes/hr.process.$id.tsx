@@ -22,7 +22,8 @@ function ProcessDetail() {
   const candidateId = id.startsWith("proc-") ? id.slice("proc-".length) : id;
   const { data: candData } = useCandidates();
   const candidate = candData?.data.find((c) => c.id === candidateId);
-  const { data: evData, isLoading } = useProcessEvents(id);
+  // Events are stored with the plain candidate UUID as process_id (no "proc-" prefix)
+  const { data: evData, isLoading } = useProcessEvents(candidateId);
   const events = evData?.data ?? [];
   const [filter, setFilter] = useState<"all" | "human" | "robot">("all");
 
