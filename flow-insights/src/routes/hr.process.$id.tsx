@@ -27,8 +27,8 @@ function ProcessDetail() {
   const events = evData?.data ?? [];
   const [filter, setFilter] = useState<"all" | "human" | "robot">("all");
 
-  const waitingHuman = events.some((e) => e.path_type === "human" && e.status === "waiting_approval");
-  const decided = events.some((e) => e.step_code.startsWith("decision_"));
+  const decided = candidate && ["hired", "rejected", "interview"].includes(candidate.status);
+  const waitingHuman = candidate && ["applied", "shortlisted", "scoring"].includes(candidate.status);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -56,6 +56,47 @@ function ProcessDetail() {
               )}
             </div>
           </div>
+
+          {candidate && (() => {
+            const appData = (candidate as any).application_data ?? {};
+            const cv = appData.cv ?? appData.experience ?? null;
+            const coverLetter = appData.coverLetter ?? appData.cover_letter ?? null;
+            const skills: string[] = appData.skills ?? appData.certifications ?? [];
+            const education = appData.education ?? null;
+            if (!cv && !coverLetter && !skills.length && !education) return null;
+            return (
+              <div className="mt-4 border-t pt-4 grid gap-3 sm:grid-cols-2 text-sm">
+                {cv && (
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Erfahrung / CV</div>
+                    <p className="text-foreground">{cv}</p>
+                  </div>
+                )}
+                {education && (
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Ausbildung</div>
+                    <p className="text-foreground">{education}</p>
+                  </div>
+                )}
+                {skills.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Skills</div>
+                    <div className="flex flex-wrap gap-1">
+                      {skills.map((s) => (
+                        <span key={s} className="rounded bg-surface px-2 py-0.5 text-xs font-medium">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {coverLetter && (
+                  <div className="sm:col-span-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Anschreiben</div>
+                    <p className="text-foreground italic">"{coverLetter}"</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </section>
 
         <section className="rounded-md border bg-card p-4 shadow-elevated">
