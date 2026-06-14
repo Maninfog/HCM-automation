@@ -6,6 +6,7 @@ import { logoutHr } from "@/lib/hr-auth";
 const nav = [
   { to: "/hr", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/hr/candidates", label: "Bewerberdaten", icon: Users },
+  { to: "/hr/payroll", label: "Payroll", icon: Wallet },
 ];
 
 export function AppSidebar() {
@@ -48,16 +49,6 @@ export function AppSidebar() {
               </li>
             );
           })}
-        </ul>
-        <div className="caption px-2 py-2 mt-4">Modules</div>
-        <ul className="space-y-0.5">
-          <li>
-            <div className="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-muted-foreground">
-              <Wallet className="h-4 w-4" />
-              Payroll
-              <span className="ml-auto text-[10px] rounded bg-muted px-1.5 py-0.5">soon</span>
-            </div>
-          </li>
         </ul>
       </nav>
       <div className="border-t p-2">
