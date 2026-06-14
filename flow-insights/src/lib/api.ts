@@ -14,12 +14,13 @@ async function fetchCandidates(): Promise<Sourced<Candidate[]>> {
   try {
     const { data, error } = await sb
       .from("candidates")
-      .select("*, positions(title)")
+      .select("*, positions(position_title)")
       .order("updated_at", { ascending: false });
     if (error) throw error;
     const mapped: Candidate[] = (data || []).map((c: any) => ({
       ...c,
-      position_title: c.positions?.title ?? c.position_title,
+      position_title: c.positions?.position_title ?? c.position_title,
+      full_name: c.full_name ?? `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim(),
     }));
     return { data: mapped, source: "live" };
   } catch {
@@ -31,7 +32,7 @@ async function fetchPositions(): Promise<Sourced<Position[]>> {
   const sb = getSupabase();
   if (!sb) return { data: mockPositions, source: "mock" };
   try {
-    const { data, error } = await sb.from("positions").select("*").order("title");
+    const { data, error } = await sb.from("positions").select("*").order("position_title");
     if (error) throw error;
     return { data: (data || []) as Position[], source: "live" };
   } catch {

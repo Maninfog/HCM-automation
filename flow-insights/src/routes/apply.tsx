@@ -87,7 +87,7 @@ function ApplyPage() {
                     <SelectTrigger><SelectValue placeholder="Position wählen" /></SelectTrigger>
                     <SelectContent>
                       {positions.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.title} — {p.department}, {p.location}</SelectItem>
+                        <SelectItem key={p.id} value={p.id}>{(p as any).position_title ?? p.id}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
