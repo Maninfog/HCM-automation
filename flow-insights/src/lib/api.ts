@@ -152,7 +152,17 @@ export function useApplyMutation() {
         });
         return { mock: true, candidate_id: newId };
       }
-      return postWithTimeout(ENV.N8N_APPLY_WEBHOOK, payload);
+      const nameParts = payload.full_name.trim().split(/\s+/);
+      const firstName = nameParts[0] ?? "Unbekannt";
+      const lastName = nameParts.slice(1).join(" ") || firstName;
+      return postWithTimeout(ENV.N8N_APPLY_WEBHOOK, {
+        firstName,
+        lastName,
+        email: payload.email,
+        positionId: payload.position_id,
+        coverLetter: payload.cover_letter ?? "",
+        cvUrl: payload.cv_url ?? "",
+      });
     },
     onError: (e: any) => {
       toast.error("Apply-Webhook nicht erreichbar", { description: e?.message ?? "Mock-Modus aktiv" });
