@@ -78,14 +78,14 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/employees",
+        "url": "https://yozyspuriehckddkhina.supabase.co/rest/v1/employees?on_conflict=email",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             { "name": "apikey", "value": "=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvenlzcHVyaWVoY2tkZGtoaW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU5MTA5MCwiZXhwIjoyMDk0MTY3MDkwfQ.ClLuMRCAeNn5clmRYlRHgv9Mg8UlF4YciRn3l86jLwk" },
             { "name": "Authorization", "value": "=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvenlzcHVyaWVoY2tkZGtoaW5hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU5MTA5MCwiZXhwIjoyMDk0MTY3MDkwfQ.ClLuMRCAeNn5clmRYlRHgv9Mg8UlF4YciRn3l86jLwk" },
             { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=representation" }
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
           ]
         },
         "sendBody": true,
