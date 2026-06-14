@@ -14,13 +14,13 @@ async function fetchCandidates(): Promise<Sourced<Candidate[]>> {
   try {
     const { data, error } = await sb
       .from("candidates")
-      .select("*, positions(position_title)")
+      .select("*")
       .order("updated_at", { ascending: false });
     if (error) throw error;
     const mapped: Candidate[] = (data || []).map((c: any) => ({
       ...c,
-      position_title: c.positions?.position_title ?? c.position_title,
       full_name: c.full_name ?? `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim(),
+      position_title: c.position_title ?? c.position_id ?? "—",
     }));
     return { data: mapped, source: "live" };
   } catch {
