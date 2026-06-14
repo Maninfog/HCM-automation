@@ -20,7 +20,10 @@ async function fetchCandidates(): Promise<Sourced<Candidate[]>> {
     const mapped: Candidate[] = (data || []).map((c: any) => ({
       ...c,
       full_name: c.full_name ?? `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim(),
-      position_title: c.position_title ?? c.position_id ?? "—",
+      score: c.score ?? c.qualification_score ?? 0,
+      position_title: c.position_title ?? "—",
+      last_step: c.last_step ?? c.status ?? "—",
+      last_path: c.last_path ?? "robot",
     }));
     return { data: mapped, source: "live" };
   } catch {
